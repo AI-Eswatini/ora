@@ -1,0 +1,45 @@
+{
+  "name": "ora",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "demo:call": "tsx scripts/01-simple-call.ts",
+    "demo:stream": "tsx scripts/02-streaming.ts",
+    "demo:tools": "tsx scripts/03-tool-calling.ts",
+    "demo:structured": "tsx scripts/04-structured-output.ts",
+    "demo:tokens": "tsx scripts/05-tokenization.ts",
+    "demo:embeddings": "tsx scripts/06-embeddings.ts",
+    "demo:rag": "tsx scripts/07-rag-two-step.ts",
+    "demo:agent-loop": "tsx scripts/08-full-agent-loop.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.50",
+    "@ai-sdk/google": "^4.0.64",
+    "@ai-sdk/react": "4.0.97",
+    "ai": "^7.0.93",
+    "dotenv": "^18.0.2",
+    "lucide-react": "^1.42.0",
+    "next": "16.2.6",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "streamdown": "^2.6.0",
+    "voyage-ai-provider": "5.0.0",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@11.18.0"
+}
