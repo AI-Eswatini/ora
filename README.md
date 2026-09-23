@@ -62,6 +62,15 @@ Powers the RAG tool that searches ORA's lending policy (embeddings + reranking).
    ANTHROPIC_API_KEY=your-key-here
    ```
 
+### 4. Slack — optional
+
+Lets ORA post its recorded decisions to a `#loan-approvals` Slack channel. Not required to run ORA — skip this if you don't need it. Full setup in [specs/slack.md](./specs/slack.md).
+
+```
+SLACK_BOT_TOKEN=your-bot-token-here
+SLACK_LOAN_APPROVALS_CHANNEL=loan-approvals   # optional, this is the default
+```
+
 ## Live-demo scripts
 
 Each AI-stack concept ORA uses — a plain LLM call, streaming, tool calling, structured output, tokenization, embeddings, two-stage RAG, the full agent loop — also exists as a standalone script you can run and talk through on its own. See [scripts/README.md](./scripts/README.md) for the full list and `pnpm demo:*` commands.

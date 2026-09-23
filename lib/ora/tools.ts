@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { embedQuery, rerankCandidates, retrieveCandidates } from "@/lib/rag/store";
+import { postToSlack } from "@/lib/slack";
 
 export const searchPolicy = tool({
   description:
@@ -69,8 +70,38 @@ export const recordDecision = tool({
   }),
 });
 
+export const notifyLoanApprovals = tool({
+  description:
+    "Post ORA's recorded decision to the #loan-approvals Slack channel. This is the visible announcement of an already-approved outcome -- only call it after recordDecision has been called and approved, never as a substitute for it.",
+  inputSchema: z.object({
+    applicantName: z.string().describe("The SME applicant or business name"),
+    decision: z.enum(["approve", "decline", "refer_to_committee"]),
+    facilityAmount: z.number().optional().describe("Recommended facility amount, if approving"),
+    rationale: z.string().describe("Short rationale citing the ratios calculated and the policy checked"),
+  }),
+  execute: async (input) => {
+    const decisionLabel: Record<typeof input.decision, string> = {
+      approve: ":white_check_mark: Approved",
+      decline: ":x: Declined",
+      refer_to_committee: ":mag: Referred to committee",
+    };
+
+    const lines = [
+      `*${decisionLabel[input.decision]}* -- ${input.applicantName}`,
+      input.facilityAmount !== undefined
+        ? `*Facility amount:* ${input.facilityAmount.toLocaleString()}`
+        : null,
+      `*Rationale:* ${input.rationale}`,
+    ].filter((line): line is string => line !== null);
+
+    const { channel, ts } = await postToSlack({ text: lines.join("\n") });
+    return { channel, ts, postedAt: new Date().toISOString() };
+  },
+});
+
 export const oraTools = {
   searchPolicy,
   checkAffordability,
   recordDecision,
+  notifyLoanApprovals,
 };
