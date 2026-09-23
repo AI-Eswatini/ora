@@ -4,7 +4,7 @@
  * decides WHAT it does. Here: the model has no built-in sense of "now",
  * so it has to call the tool to find out.
  *
- * Run: pnpm demo:tools
+ * Run: npm run demo:tools
  */
 import { generateText, tool, isStepCount } from "ai";
 import { config } from "dotenv";

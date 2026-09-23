@@ -4,7 +4,7 @@
  * arithmetic on those numbers -- so extraction stays a model call, and the
  * ratio math becomes a plain function (lib/ora/tools.ts checkAffordability).
  *
- * Run: pnpm demo:structured
+ * Run: npm run demo:structured
  */
 import { generateText, Output } from "ai";
 import { checkAffordability } from "@/lib/ora/tools";

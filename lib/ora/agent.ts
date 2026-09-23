@@ -1,16 +1,16 @@
-// import { google } from "@ai-sdk/google";
+import { google } from "@ai-sdk/google";
 import { InferAgentUIMessage, isStepCount, ToolLoopAgent } from "ai";
 import { logger } from "@/lib/utils";
 import { oraTools } from "./tools";
-import { createAnthropic } from "@ai-sdk/anthropic";
+// import { createAnthropic } from "@ai-sdk/anthropic";
 
-const anthropic = createAnthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// const anthropic = createAnthropic({
+//   apiKey: process.env.ANTHROPIC_API_KEY,
+// });
 
 export const oraAgent = new ToolLoopAgent({
-  // model: google("gemini-3.1-flash-lite"),
-  model: anthropic("claude-sonnet-5"),
+  model: google("gemini-3.1-flash-lite"),
+  // model: anthropic("claude-sonnet-5"),
   instructions: `You are ORA, an SME credit underwriting assistant. Given a loan application, you decide whether to approve, decline, or refer it to committee -- based strictly on ORA's lending policy, never on memory or guesswork.
 
 Rules:

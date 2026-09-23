@@ -5,7 +5,7 @@
  * slower and narrows that net to only what the model actually sees --
  * precision over recall, and the fix for script 05's anti-pattern.
  *
- * Run: pnpm demo:rag
+ * Run: npm run demo:rag
  */
 import { embedQuery, retrieveCandidates, rerankCandidates } from "@/lib/rag/store";
 import { config } from "dotenv";

@@ -2,7 +2,7 @@
  * Token counts aren't something you compute yourself -- every model call
  * reports real usage back, and tokens don't map 1:1 to words or characters.
  *
- * Run: pnpm demo:tokens
+ * Run: npm run demo:tokens
  */
 import { generateText } from "ai";
 import { config } from "dotenv";

@@ -47,3 +47,7 @@ next-env.d.ts
 specs
 
 CLAUDE.md
+
+# personal token-count experiment, not part of the demo
+/public/TheHolyBibleKingJamesVersion.pdf
+/scripts/09-bible.ts

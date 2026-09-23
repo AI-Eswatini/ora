@@ -3,7 +3,7 @@
  * No tools, no streaming, no memory. Everything else in this folder is
  * this call plus one more idea layered on top.
  *
- * Run: pnpm demo:call
+ * Run: npm run demo:call
  */
 import { generateText } from "ai";
 import { config } from "dotenv";

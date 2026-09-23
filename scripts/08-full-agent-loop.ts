@@ -8,7 +8,7 @@
  * it reads the pending approval request, decides, and sends it back in a
  * second call.
  *
- * Run: pnpm demo:agent-loop
+ * Run: npm run demo:agent-loop
  */
 import type { ModelMessage, ToolApprovalResponse } from "ai";
 import { config } from "dotenv";

@@ -3,7 +3,7 @@
  * that mean similar things end up close together, even with zero shared
  * keywords. This is the primitive underneath RAG (script 07).
  *
- * Run: pnpm demo:embeddings
+ * Run: npm run demo:embeddings
  */
 import { embedMany, cosineSimilarity } from "ai";
 import { config } from "dotenv";

@@ -4,31 +4,32 @@ ORA is an SME credit underwriting agent, built to demonstrate "The AI Stack" at 
 
 ## Prerequisites
 
-- **Node.js 20.9+** — [nodejs.org](https://nodejs.org/en/download) (npm ships with it). Check with `node -v`.
-- **pnpm** — `npm install -g pnpm`. Don't want to install it? The npm equivalents work too, see the note below.
+- **Node.js 20.9+** — [nodejs.org](https://nodejs.org/en/download). npm ships with it, so there's nothing else to install. Check with `node -v` and `npm -v`.
+- **Visual Studio Code** — [code.visualstudio.com](https://code.visualstudio.com/download). We'll be reading and editing ORA's code together during the session.
 
 ## Quick start
 
 ```bash
 git clone https://github.com/AI-Eswatini/ora.git
 cd ora
-pnpm install
+npm install --legacy-peer-deps
 cp .env.example .env
+code .
 ```
 
 Now open `.env` and add your API keys — see [Getting your API keys](#getting-your-api-keys) below.
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) and start chatting with ORA. That's it — install, add keys, run.
 
-> Using npm instead of pnpm? `npm install` and `npm run dev` work the same way.
+> Prefer pnpm? `pnpm install` and `pnpm dev` work the same way.
 
 ## Getting your API keys
 
-`.env` needs two keys to run ORA as-is, plus one held in reserve for the live session.
+`.env` needs two keys to run ORA as-is. The others are optional.
 
 ### 1. Google Gemini — required
 
@@ -52,9 +53,9 @@ Powers the RAG tool that searches ORA's lending policy (embeddings + reranking).
    ```
 3. **Can't create an account on the day?** Ask the session organizer for a shared key.
 
-### 3. Anthropic (Claude) — reserved for the live demo
+### 3. Anthropic (Claude) — optional
 
-`@ai-sdk/anthropic` is already installed. ORA runs on Gemini by default, but the agent's model in [lib/ora/agent.ts](./lib/ora/agent.ts) can be swapped to Claude live on stage — the AI SDK gives every provider the same interface, so it's a one-line change with zero install step.
+Run ORA on Claude instead of Gemini. `@ai-sdk/anthropic` is already installed. ORA uses Gemini by default, but you can switch the agent's model in [lib/ora/agent.ts](./lib/ora/agent.ts) to Claude. The AI SDK gives every provider the same interface, so that's a one-line change and you don't need to install anything.
 
 1. Get a key at **[console.anthropic.com](https://console.anthropic.com)**.
 2. Add it to `.env`:
@@ -64,7 +65,7 @@ Powers the RAG tool that searches ORA's lending policy (embeddings + reranking).
 
 ### 4. Slack — optional
 
-Lets ORA post its recorded decisions to a `#loan-approvals` Slack channel. Not required to run ORA — skip this if you don't need it. Full setup in [specs/slack.md](./specs/slack.md).
+Lets ORA post its recorded decisions to a `#loan-approvals` Slack channel. Not required to run ORA — skip this if you don't need it. Full setup in [docs/slack.md](./docs/slack.md).
 
 ```
 SLACK_BOT_TOKEN=your-bot-token-here
@@ -73,7 +74,7 @@ SLACK_LOAN_APPROVALS_CHANNEL=loan-approvals   # optional, this is the default
 
 ## Live-demo scripts
 
-Each AI-stack concept ORA uses — a plain LLM call, streaming, tool calling, structured output, tokenization, embeddings, two-stage RAG, the full agent loop — also exists as a standalone script you can run and talk through on its own. See [scripts/README.md](./scripts/README.md) for the full list and `pnpm demo:*` commands.
+Each AI-stack concept ORA uses — a plain LLM call, streaming, tool calling, structured output, tokenization, embeddings, two-stage RAG, the full agent loop — also exists as a standalone script you can run and talk through on its own. See [scripts/README.md](./scripts/README.md) for the full list and `npm run demo:*` commands.
 
 ## Learn more
 

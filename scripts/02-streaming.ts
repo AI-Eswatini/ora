@@ -3,7 +3,7 @@
  * to finish, but the user sees the first token in milliseconds instead of
  * waiting for the entire response — this is the UX reason streaming exists.
  *
- * Run: pnpm demo:stream
+ * Run: npm run demo:stream
  */
 import { streamText } from "ai";
 import { config } from "dotenv";
