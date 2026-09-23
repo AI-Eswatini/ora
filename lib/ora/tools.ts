@@ -70,9 +70,9 @@ export const recordDecision = tool({
   }),
 });
 
-export const notifyLoanApprovals = tool({
+export const notifyLoanDecision = tool({
   description:
-    "Post ORA's recorded decision to the #loan-approvals Slack channel. This is the visible announcement of an already-approved outcome -- only call it after recordDecision has been called and approved, never as a substitute for it.",
+    "Post ORA's recorded decision to the #loan-approvals Slack channel. Call this for every decision type -- approve, decline, and refer_to_committee alike -- not just approvals; the whole point is a visible record of every outcome. Only call it after recordDecision has been called and the loan officer has approved it, never as a substitute for that step.",
   inputSchema: z.object({
     applicantName: z.string().describe("The SME applicant or business name"),
     decision: z.enum(["approve", "decline", "refer_to_committee"]),
@@ -103,5 +103,5 @@ export const oraTools = {
   searchPolicy,
   checkAffordability,
   recordDecision,
-  notifyLoanApprovals,
+  notifyLoanDecision,
 };

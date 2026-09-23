@@ -70,3 +70,11 @@ A sudden change in the business's primary banking relationship, request to redir
 Deterioration in trade reference or credit bureau data, such as new judgments, increased days-payable-outstanding to suppliers, or a drop in credit score of more than 50 points within a quarter, should trigger a full facility review ahead of the next scheduled annual review.`,
   },
 ];
+
+// Example questions shown in the chat empty state. Add or edit entries here --
+// no UI changes needed.
+export const samplePrompts: string[] = [
+  "What's the minimum repayment coverage for a term loan, and why does it matter more than profitability?",
+  "A retail business wants a R1,500,000 term loan. Revenue R2,000,000, gross profit R700,000, operating profit R450,000, annual loan repayments R300,000. They've been trading for 3 years. Should we approve it?",
+  "This applicant is a restaurant trading for 8 months - what should I be worried about?",
+];
