@@ -14,7 +14,7 @@ ORA is an SME credit underwriting agent, built to demonstrate "The AI Stack" at 
 git clone https://github.com/AI-Eswatini/ora.git
 cd ora
 npm install --legacy-peer-deps
-cp .env.example .env
+cp .env.example .env # If cp does not work for you, try using Git Bash, or rename file manually.
 code .
 ```
 
