@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { embedQuery, rerankCandidates, retrieveCandidates } from "@/lib/rag/store";
-import { postToSlack } from "@/lib/slack";
+import { isSlackConfigured, postToSlack } from "@/lib/slack";
 
 export const searchPolicy = tool({
   description:
@@ -49,11 +49,15 @@ export const checkAffordability = tool({
     annualLoanRepayments: z.number().describe("Total annual loan repayments across all debt -- principal plus interest"),
     facilityType: z.enum(["term_loan", "working_capital"]).describe("The type of loan being assessed, since the minimum repayment coverage differs"),
   }),
-  execute: async (input) => ({
-    grossMarginPct: Number(((input.grossProfit / input.revenue) * 100).toFixed(1)),
-    repaymentCoverage: Number((input.operatingProfit / input.annualLoanRepayments).toFixed(2)),
-    facilityType: input.facilityType,
-  }),
+  execute: async ({ revenue, grossProfit, operatingProfit, annualLoanRepayments, facilityType }) => {
+    // Gross margin: the percentage of revenue left after the cost of sales
+    const grossMarginPct = Number(((grossProfit / revenue) * 100).toFixed(1));
+
+    // Repayment coverage: how many times operating profit covers the year's loan repayments
+    const repaymentCoverage = Number((operatingProfit / annualLoanRepayments).toFixed(2));
+
+    return { grossMarginPct, repaymentCoverage, facilityType };
+  },
 });
 
 export const recordDecision = tool({
@@ -64,10 +68,11 @@ export const recordDecision = tool({
     facilityAmount: z.number().optional().describe("Recommended facility amount, if approving"),
     rationale: z.string().describe("Short rationale citing the ratios calculated and the policy checked"),
   }),
-  execute: async (input) => ({
-    ...input,
-    recordedAt: new Date().toISOString(),
-  }),
+  execute: async (input) => {
+    // await db.query("INSERT INTO loan_decisions (decision, facility_amount, rationale) VALUES ($1, $2, $3)", [input.decision, input.facilityAmount, input.rationale]);
+
+    return { ...input, recordedAt: new Date().toISOString() };
+  },
 });
 
 export const notifyLoanDecision = tool({
@@ -99,9 +104,13 @@ export const notifyLoanDecision = tool({
   },
 });
 
-export const oraTools = {
+const coreTools = {
   searchPolicy,
   checkAffordability,
   recordDecision,
-  notifyLoanDecision,
 };
+
+// Slack is optional -- without SLACK_BOT_TOKEN the tool isn't registered, so the agent never tries to call it.
+export const oraTools = isSlackConfigured()
+  ? { ...coreTools, notifyLoanDecision }
+  : coreTools;

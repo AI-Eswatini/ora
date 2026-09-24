@@ -1,5 +1,6 @@
 import { google } from "@ai-sdk/google";
 import { InferAgentUIMessage, isStepCount, ToolLoopAgent } from "ai";
+import { isSlackConfigured } from "@/lib/slack";
 import { logger } from "@/lib/utils";
 import { oraTools } from "./tools";
 // import { createAnthropic } from "@ai-sdk/anthropic";
@@ -7,6 +8,11 @@ import { oraTools } from "./tools";
 // const anthropic = createAnthropic({
 //   apiKey: process.env.ANTHROPIC_API_KEY,
 // });
+
+// Slack is optional. This rule is only in the prompt when notifyLoanDecision is actually registered (see ./tools).
+const slackRule = isSlackConfigured()
+  ? "- Once recordDecision has been approved and recorded, call notifyLoanDecision to announce the outcome in the #loan-approvals Slack channel -- do this for every decision, including declines and committee referrals, not only approvals. Never call it before recordDecision has actually gone through.\n"
+  : "";
 
 export const oraAgent = new ToolLoopAgent({
   model: google("gemini-3.1-flash-lite"),
@@ -21,8 +27,7 @@ Rules:
 - Speak plainly, for a non-specialist reading the decision. Call it "repayment coverage" (or "repayment coverage ratio") -- never the industry term "DSCR". Lead your answer with the verdict in one sentence, immediately followed by the checklist that supports it, so the reader can see the verdict actually follows from the numbers.
 - Be direct about risk. If the numbers breach policy, say so plainly rather than softening it.
 - Only call recordDecision once you've run checkAffordability and checked the result against policy. It requires loan officer approval; if it's denied, explain why you think it was warranted but do not call it again for the same application unless asked.
-- Once recordDecision has been approved and recorded, call notifyLoanDecision to announce the outcome in the #loan-approvals Slack channel -- do this for every decision, including declines and committee referrals, not only approvals. Never call it before recordDecision has actually gone through.
-- If asked to do something you don't have a tool for, say so plainly rather than guessing.`,
+${slackRule}- If asked to do something you don't have a tool for, say so plainly rather than guessing.`,
   tools: oraTools,
   stopWhen: isStepCount(12),
   temperature: 0.2,

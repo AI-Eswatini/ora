@@ -18,7 +18,7 @@ async function main() {
       "Write a 4-line poem about a loan officer waiting on a credit decision.",
   });
 
-  console.log("--- streaming text (watch it arrive token by token) ---\n");
+  console.log("--- streaming text ---\n");
   for await (const chunk of result.textStream) {
     process.stdout.write(chunk);
   }

@@ -22,6 +22,11 @@ export type PostToSlackResult = {
   ts: string;
 };
 
+/** Slack is optional: the notify tool is only offered to the agent when a bot token is set. */
+export function isSlackConfigured(): boolean {
+  return Boolean(process.env.SLACK_BOT_TOKEN?.trim());
+}
+
 function authHeaders() {
   const token = process.env.SLACK_BOT_TOKEN;
   if (!token) {

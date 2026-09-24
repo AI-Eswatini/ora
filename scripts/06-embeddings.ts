@@ -29,6 +29,12 @@ async function main() {
   console.log(`Embedded ${embeddings.length} sentences into ${embeddings[0].length}-dimensional vectors.`);
   console.log("Token usage:", usage);
 
+  console.log("\nThe embeddings themselves:");
+  for (const [i, embedding] of embeddings.entries()) {
+    console.log(`\n[${i}] "${sentences[i]}"`);
+    console.log(embedding);
+  }
+
   console.log("\nCosine similarity (1.0 = identical meaning, 0 = unrelated):");
   for (let i = 0; i < sentences.length; i++) {
     for (let j = i + 1; j < sentences.length; j++) {

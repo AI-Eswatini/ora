@@ -24,7 +24,8 @@ async function main() {
     model,
     tools: { getCurrentDateTime },
     stopWhen: isStepCount(3),
-    prompt: "What's today's date, and how many days are left until the end of the year?",
+    prompt:
+      "What's today's date, and how many days are left until the end of the year?",
   });
 
   console.log(

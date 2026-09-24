@@ -1,27 +1,66 @@
 /**
- * The full loop end to end, using the real production agent
- * (lib/ora/agent.ts): observe -> think -> act (searchPolicy,
- * checkAffordability) -> reflect -> act again (recordDecision).
+ * The full loop end to end: observe -> think -> act (lookupOrder) -> reflect
+ * -> act again (issueRefund). A self-contained agent with two toy tools,
+ * defined below.
  *
- * recordDecision needs human approval (toolApproval in agent.ts). With no
- * chat UI to click "approve", this script plays the loan officer itself --
- * it reads the pending approval request, decides, and sends it back in a
- * second call.
+ * issueRefund needs human approval (toolApproval below). With no chat UI to
+ * click "approve", this script plays the human itself -- it reads the pending
+ * approval request, decides, and sends it back in a second call.
  *
  * Run: npm run demo:agent-loop
  */
-import type { ModelMessage, ToolApprovalResponse } from "ai";
+import {
+  isStepCount,
+  tool,
+  ToolLoopAgent,
+  type ModelMessage,
+  type ToolApprovalResponse,
+} from "ai";
 import { config } from "dotenv";
-import { oraAgent } from "@/lib/ora/agent";
+import { z } from "zod";
+import { model } from "./00-model";
 
 config();
 
-const application = `A hospitality business, trading for 3 years, is applying to renew a
-R1,500,000 working capital facility. Financials: revenue R4,200,000, gross
-profit R2,600,000, operating profit R680,000, annual loan repayments R550,000.
-Check this against policy and record your recommended decision.`;
+const lookupOrder = tool({
+  description: "Look up an order: what was bought, what was paid, and its delivery status.",
+  inputSchema: z.object({ orderId: z.string() }),
+  execute: async ({ orderId }) => ({
+    orderId,
+    item: "Wireless headphones",
+    amountPaid: 1299,
+    currency: "ZAR",
+    status: "delivered",
+    deliveredOn: "2026-09-10",
+  }),
+});
 
-function printSteps(steps: Awaited<ReturnType<typeof oraAgent.generate>>["steps"]) {
+const issueRefund = tool({
+  description:
+    "Refund an order to the customer's original payment method. This moves money, so it needs human approval.",
+  inputSchema: z.object({
+    orderId: z.string(),
+    amount: z.number(),
+    reason: z.string(),
+  }),
+  execute: async (input) => ({ ...input, refundedAt: new Date().toISOString() }),
+});
+
+const agent = new ToolLoopAgent({
+  model,
+  instructions:
+    "You are a customer support agent. Always look up the order before acting on it. Only refund what the order shows was paid.",
+  tools: { lookupOrder, issueRefund },
+  stopWhen: isStepCount(6),
+  toolApproval: {
+    issueRefund: "user-approval",
+  },
+});
+
+const request =
+  "Order 1042 arrived with a cracked earcup. Please refund it in full.";
+
+function printSteps(steps: Awaited<ReturnType<typeof agent.generate>>["steps"]) {
   for (const [i, step] of steps.entries()) {
     console.log(`\nStep ${i + 1}:`);
     for (const call of step.toolCalls) {
@@ -34,10 +73,10 @@ function printSteps(steps: Awaited<ReturnType<typeof oraAgent.generate>>["steps"
 }
 
 async function main() {
-  const messages: ModelMessage[] = [{ role: "user", content: application }];
+  const messages: ModelMessage[] = [{ role: "user", content: request }];
 
   console.log("--- first call ---");
-  const first = await oraAgent.generate({ messages });
+  const first = await agent.generate({ messages });
   messages.push(...first.responseMessages);
   printSteps(first.steps);
 
@@ -51,7 +90,7 @@ async function main() {
     return;
   }
 
-  console.log(`\n--- ${pendingApprovals.length} tool call(s) paused for loan officer approval ---`);
+  console.log(`\n--- ${pendingApprovals.length} tool call(s) paused for human approval ---`);
   const approvalResponses: ToolApprovalResponse[] = pendingApprovals.map((part) => {
     if (part.type !== "tool-approval-request") throw new Error("unreachable");
     console.log(`  approving approvalId=${part.approvalId} for ${part.toolCall.toolName}`);
@@ -59,14 +98,14 @@ async function main() {
       type: "tool-approval-response",
       approvalId: part.approvalId,
       approved: true,
-      reason: "Loan officer reviewed the ratios and policy check, decision looks sound.",
+      reason: "Support lead checked the order and the refund amount, looks fine.",
     };
   });
 
   messages.push({ role: "tool", content: approvalResponses });
 
-  console.log("\n--- second call (decision now executes) ---");
-  const second = await oraAgent.generate({ messages });
+  console.log("\n--- second call (refund now executes) ---");
+  const second = await agent.generate({ messages });
   printSteps(second.steps);
 
   console.log("\n--- final answer ---");

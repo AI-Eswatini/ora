@@ -1,13 +1,11 @@
 /**
- * Structured output: instead of free text, the model fills a schema. LLMs
- * are good at turning messy text into structured numbers, bad at doing
- * arithmetic on those numbers -- so extraction stays a model call, and the
- * ratio math becomes a plain function (lib/ora/tools.ts checkAffordability).
+ * Structured output: instead of free text, the model fills a schema. Given a
+ * messy natural-language note, it returns typed fields (numbers, an enum)
+ * that code can use directly, with no parsing of prose.
  *
  * Run: npm run demo:structured
  */
 import { generateText, Output } from "ai";
-import { checkAffordability } from "@/lib/ora/tools";
 import { config } from "dotenv";
 import { model } from "./00-model";
 import { z } from "zod";
@@ -36,17 +34,8 @@ async function main() {
     prompt: `Extract the financial figures from this loan officer's note as structured data:\n${loanOfficerNote}`,
   });
 
-  console.log("--- structured extraction (the model's job) ---");
+  console.log("--- structured extraction ---");
   console.log(output);
-
-  const ratios = await checkAffordability.execute(output, {
-    toolCallId: "demo",
-    messages: [],
-    context: {},
-  });
-
-  console.log("\n--- ratio calculation (plain code's job, zero LLM calls) ---");
-  console.log(ratios);
 }
 
 main().catch((error) => {
