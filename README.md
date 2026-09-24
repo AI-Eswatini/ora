@@ -4,7 +4,8 @@ ORA is an SME credit underwriting agent, built to demonstrate "The AI Stack" at 
 
 ## Prerequisites
 
-- **Node.js 20.9+** — [nodejs.org](https://nodejs.org/en/download). npm ships with it, so there's nothing else to install. Check with `node -v` and `npm -v`.
+- **Git** — [git-scm.com](https://git-scm.com/downloads). Needed to clone the repo in the quick start below. Check with `git --version`.
+- **Node.js 20.9+** — [nodejs.org](https://nodejs.org/en/download). npm ships with it, so it doesn't need a separate install. Check with `node -v` and `npm -v`.
 - **Visual Studio Code** — [code.visualstudio.com](https://code.visualstudio.com/download). We'll be reading and editing ORA's code together during the session.
 
 ## Quick start
