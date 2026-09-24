@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { lastAssistantMessageIsCompleteWithApprovalResponses } from "ai";
 import {
@@ -8,6 +8,7 @@ import {
   ArrowDown,
   ArrowUp,
   Brain,
+  Briefcase,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -18,6 +19,7 @@ import {
   Send,
   ShieldQuestion,
   ShieldX,
+  Sparkles,
   X,
   XCircle,
 } from "lucide-react";
@@ -82,15 +84,26 @@ function ToolCallCard({
   const hasDetails =
     part.input != null || ((isDone || isPreliminary) && part.output != null) || isError || isDenied;
 
+  const tone = isError || isDenied
+    ? "border-red-300 bg-red-50 shadow-red-900/5"
+    : isApproval
+      ? "border-amber-300 bg-amber-50 shadow-amber-900/5"
+      : isPending || isPreliminary
+        ? "border-blue-300 bg-blue-50 shadow-blue-900/5"
+        : "border-border bg-muted/60";
+
+  const codeBlock =
+    "mt-2 overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-md border border-black/10 bg-white p-2 text-[11px] font-medium text-black";
+
   return (
-    <div className="text-xs rounded-lg border border-border bg-muted/60 px-3 py-2">
+    <div className={`w-full rounded-xl border px-3 py-2.5 text-xs shadow-sm ${tone}`}>
       <button
         type="button"
         onClick={() => setCollapsed((c) => !c)}
         disabled={!hasDetails}
         className="flex w-full items-center gap-1.5 font-medium text-foreground disabled:cursor-default"
       >
-        {isPending && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
+        {isPending && <Loader2 className="size-3.5 animate-spin text-blue-500" />}
         {isPreliminary && <Loader2 className="size-3.5 animate-spin text-blue-500" />}
         {isDone && <CheckCircle2 className="size-3.5 text-primary" />}
         {isError && <XCircle className="size-3.5 text-red-600" />}
@@ -105,15 +118,11 @@ function ToolCallCard({
       </button>
 
       {!collapsed && part.input != null && (
-        <pre className="mt-1 overflow-x-auto whitespace-pre-wrap wrap-break-word text-[11px] text-muted-foreground">
-          {JSON.stringify(part.input, null, 2)}
-        </pre>
+        <pre className={codeBlock}>{JSON.stringify(part.input, null, 2)}</pre>
       )}
 
       {!collapsed && (isDone || isPreliminary) && part.output != null && (
-        <pre className="mt-1 overflow-x-auto whitespace-pre-wrap wrap-break-word text-[11px] text-muted-foreground">
-          {JSON.stringify(part.output, null, 2)}
-        </pre>
+        <pre className={codeBlock}>{JSON.stringify(part.output, null, 2)}</pre>
       )}
 
       {!collapsed && isError && <p className="mt-1 text-red-600">{part.errorText}</p>}
@@ -161,13 +170,23 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [selectedDoc, setSelectedDoc] = useState<KnowledgeDocument | null>(null);
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+  const [viewingApp, setViewingApp] = useState<SampleApplication | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
+  // Follow the stream only while the user is near the bottom, so scrolling up to read isn't interrupted.
+  const stickToBottomRef = useRef(true);
 
   const isBusy = status === "submitted" || status === "streaming";
 
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+  }, [messages, status]);
+
   function submit(text: string) {
     if (!text.trim() || isBusy) return;
+    stickToBottomRef.current = true;
     sendMessage({ text });
     setInput("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
@@ -180,8 +199,13 @@ export default function Home() {
   }
 
   function handleSelectApplication(app: SampleApplication) {
-    setSelectedAppId(app.id);
+    setViewingApp(app);
     setSidebarOpen(false);
+  }
+
+  function handleUseOra(app: SampleApplication) {
+    setSelectedAppId(app.id);
+    setViewingApp(null);
     submit(app.prompt);
   }
 
@@ -223,7 +247,7 @@ export default function Home() {
           onSelectDocument={handleSelectDocument}
           applications={sampleApplications}
           onSelectApplication={handleSelectApplication}
-          selectedAppId={selectedAppId}
+          selectedAppId={viewingApp?.id ?? selectedAppId}
           selectedDocId={selectedDoc?.id ?? null}
           onNewChat={handleNewChat}
           open={sidebarOpen}
@@ -231,7 +255,14 @@ export default function Home() {
         />
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 overflow-y-auto px-4 md:px-6">
+          <main
+            ref={scrollRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+            }}
+            className="flex-1 overflow-y-auto px-4 md:px-6"
+          >
             <div className="mx-auto max-w-3xl flex flex-col gap-5 py-6">
               {messages.length === 0 && (
                 <div className="flex flex-col items-center gap-6 py-10 text-center">
@@ -413,7 +444,39 @@ export default function Home() {
       </div>
 
       {selectedDoc && (
-        <DocumentModal doc={selectedDoc} onClose={() => setSelectedDoc(null)} />
+        <DocumentModal
+          title={selectedDoc.title}
+          text={selectedDoc.text}
+          onClose={() => setSelectedDoc(null)}
+        />
+      )}
+
+      {viewingApp && (
+        <DocumentModal
+          title={viewingApp.business}
+          subtitle={`Loan application · ${viewingApp.blurb}`}
+          text={viewingApp.document}
+          icon={Briefcase}
+          onClose={() => setViewingApp(null)}
+          footer={
+            <>
+              <button
+                onClick={() => setViewingApp(null)}
+                className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => handleUseOra(viewingApp)}
+                disabled={isBusy}
+                className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary-hover transition-colors disabled:opacity-40 disabled:hover:bg-primary"
+              >
+                <Sparkles className="size-4" />
+                Use Ora
+              </button>
+            </>
+          }
+        />
       )}
     </div>
   );

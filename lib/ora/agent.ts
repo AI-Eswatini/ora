@@ -3,11 +3,11 @@ import { InferAgentUIMessage, isStepCount, ToolLoopAgent } from "ai";
 import { isSlackConfigured } from "@/lib/slack";
 import { logger } from "@/lib/utils";
 import { oraTools } from "./tools";
-// import { createAnthropic } from "@ai-sdk/anthropic";
+import { createAnthropic } from "@ai-sdk/anthropic";
 
-// const anthropic = createAnthropic({
-//   apiKey: process.env.ANTHROPIC_API_KEY,
-// });
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 // Slack is optional. This rule is only in the prompt when notifyLoanDecision is actually registered (see ./tools).
 const slackRule = isSlackConfigured()
@@ -30,7 +30,6 @@ Rules:
 ${slackRule}- If asked to do something you don't have a tool for, say so plainly rather than guessing.`,
   tools: oraTools,
   stopWhen: isStepCount(12),
-  temperature: 0.2,
   maxOutputTokens: 2048,
   reasoning: "medium",
   toolApproval: {

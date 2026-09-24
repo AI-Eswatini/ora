@@ -12,28 +12,28 @@ export const searchPolicy = tool({
   execute: async function* ({ query }) {
     yield { stage: "embedding" as const, query };
 
-    const { embedding, tokens } = await embedQuery(query);
+    const { embedding: queryEmbedding, tokens: queryEmbeddingTokens } = await embedQuery(query);
 
-    const candidates = await retrieveCandidates(embedding);
+    const candidates = await retrieveCandidates(queryEmbedding);
     yield {
       stage: "retrieved" as const,
       query,
-      queryEmbeddingTokens: tokens,
-      candidates: candidates.map((c) => ({
-        source: c.docTitle,
-        relevance: Number(c.score.toFixed(3)),
+      queryEmbeddingTokens,
+      candidates: candidates.map((candidate) => ({
+        source: candidate.docTitle,
+        relevance: Number(candidate.score.toFixed(3)),
       })),
     };
 
-    const passages = await rerankCandidates(query, candidates);
+    const rerankedPassages = await rerankCandidates(query, candidates);
     yield {
       stage: "done" as const,
       query,
-      queryEmbeddingTokens: tokens,
-      passages: passages.map((p) => ({
-        source: p.docTitle,
-        text: p.text,
-        relevance: Number(p.score.toFixed(3)),
+      queryEmbeddingTokens,
+      passages: rerankedPassages.map((passage) => ({
+        source: passage.docTitle,
+        text: passage.text,
+        relevance: Number(passage.score.toFixed(3)),
       })),
     };
   },
@@ -68,10 +68,10 @@ export const recordDecision = tool({
     facilityAmount: z.number().optional().describe("Recommended facility amount, if approving"),
     rationale: z.string().describe("Short rationale citing the ratios calculated and the policy checked"),
   }),
-  execute: async (input) => {
-    // await db.query("INSERT INTO loan_decisions (decision, facility_amount, rationale) VALUES ($1, $2, $3)", [input.decision, input.facilityAmount, input.rationale]);
+  execute: async ({ decision, facilityAmount, rationale }) => {
+    // await db.query("INSERT INTO loan_decisions (decision, facility_amount, rationale) VALUES ($1, $2, $3)", [decision, facilityAmount, rationale]);
 
-    return { ...input, recordedAt: new Date().toISOString() };
+    return { decision, facilityAmount, rationale, recordedAt: new Date().toISOString() };
   },
 });
 
@@ -84,23 +84,25 @@ export const notifyLoanDecision = tool({
     facilityAmount: z.number().optional().describe("Recommended facility amount, if approving"),
     rationale: z.string().describe("Short rationale citing the ratios calculated and the policy checked"),
   }),
-  execute: async (input) => {
-    const decisionLabel: Record<typeof input.decision, string> = {
+  execute: async ({ applicantName, decision, facilityAmount, rationale }) => {
+    const decisionLabel: Record<typeof decision, string> = {
       approve: ":white_check_mark: Approved",
       decline: ":x: Declined",
       refer_to_committee: ":mag: Referred to committee",
     };
 
-    const lines = [
-      `*${decisionLabel[input.decision]}* -- ${input.applicantName}`,
-      input.facilityAmount !== undefined
-        ? `*Facility amount:* ${input.facilityAmount.toLocaleString()}`
+    const slackMessageLines = [
+      `*${decisionLabel[decision]}* -- ${applicantName}`,
+      facilityAmount !== undefined
+        ? `*Facility amount:* ${facilityAmount.toLocaleString()}`
         : null,
-      `*Rationale:* ${input.rationale}`,
-    ].filter((line): line is string => line !== null);
+      `*Rationale:* ${rationale}`,
+    ].filter((messageLine): messageLine is string => messageLine !== null);
 
-    const { channel, ts } = await postToSlack({ text: lines.join("\n") });
-    return { channel, ts, postedAt: new Date().toISOString() };
+    const { channel: slackChannel, ts: slackMessageTimestamp } = await postToSlack({
+      text: slackMessageLines.join("\n"),
+    });
+    return { channel: slackChannel, ts: slackMessageTimestamp, postedAt: new Date().toISOString() };
   },
 });
 

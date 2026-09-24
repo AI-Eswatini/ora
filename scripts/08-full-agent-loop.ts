@@ -3,19 +3,9 @@
  * -> act again (issueRefund). A self-contained agent with two toy tools,
  * defined below.
  *
- * issueRefund needs human approval (toolApproval below). With no chat UI to
- * click "approve", this script plays the human itself -- it reads the pending
- * approval request, decides, and sends it back in a second call.
- *
  * Run: npm run demo:agent-loop
  */
-import {
-  isStepCount,
-  tool,
-  ToolLoopAgent,
-  type ModelMessage,
-  type ToolApprovalResponse,
-} from "ai";
+import { isStepCount, tool, ToolLoopAgent } from "ai";
 import { config } from "dotenv";
 import { z } from "zod";
 import { model } from "./00-model";
@@ -36,8 +26,7 @@ const lookupOrder = tool({
 });
 
 const issueRefund = tool({
-  description:
-    "Refund an order to the customer's original payment method. This moves money, so it needs human approval.",
+  description: "Refund an order to the customer's original payment method.",
   inputSchema: z.object({
     orderId: z.string(),
     amount: z.number(),
@@ -52,16 +41,15 @@ const agent = new ToolLoopAgent({
     "You are a customer support agent. Always look up the order before acting on it. Only refund what the order shows was paid.",
   tools: { lookupOrder, issueRefund },
   stopWhen: isStepCount(6),
-  toolApproval: {
-    issueRefund: "user-approval",
-  },
 });
 
 const request =
   "Order 1042 arrived with a cracked earcup. Please refund it in full.";
 
-function printSteps(steps: Awaited<ReturnType<typeof agent.generate>>["steps"]) {
-  for (const [i, step] of steps.entries()) {
+async function main() {
+  const result = await agent.generate({ prompt: request });
+
+  for (const [i, step] of result.steps.entries()) {
     console.log(`\nStep ${i + 1}:`);
     for (const call of step.toolCalls) {
       console.log(`  called ${call.toolName}(${JSON.stringify(call.input)})`);
@@ -70,46 +58,9 @@ function printSteps(steps: Awaited<ReturnType<typeof agent.generate>>["steps"]) 
       console.log(`  -> ${JSON.stringify(output.output).slice(0, 300)}`);
     }
   }
-}
-
-async function main() {
-  const messages: ModelMessage[] = [{ role: "user", content: request }];
-
-  console.log("--- first call ---");
-  const first = await agent.generate({ messages });
-  messages.push(...first.responseMessages);
-  printSteps(first.steps);
-
-  const pendingApprovals = first.content.filter(
-    (part) => part.type === "tool-approval-request" && !part.isAutomatic,
-  );
-
-  if (pendingApprovals.length === 0) {
-    console.log("\n--- final answer (no approval was needed) ---");
-    console.log(first.text);
-    return;
-  }
-
-  console.log(`\n--- ${pendingApprovals.length} tool call(s) paused for human approval ---`);
-  const approvalResponses: ToolApprovalResponse[] = pendingApprovals.map((part) => {
-    if (part.type !== "tool-approval-request") throw new Error("unreachable");
-    console.log(`  approving approvalId=${part.approvalId} for ${part.toolCall.toolName}`);
-    return {
-      type: "tool-approval-response",
-      approvalId: part.approvalId,
-      approved: true,
-      reason: "Support lead checked the order and the refund amount, looks fine.",
-    };
-  });
-
-  messages.push({ role: "tool", content: approvalResponses });
-
-  console.log("\n--- second call (refund now executes) ---");
-  const second = await agent.generate({ messages });
-  printSteps(second.steps);
 
   console.log("\n--- final answer ---");
-  console.log(second.text);
+  console.log(result.text);
 }
 
 main().catch((error) => {
